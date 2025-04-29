@@ -4,17 +4,17 @@ import os
 from core.rag.extractor.extractor_base import BaseExtractor
 from core.rag.models.document import Document
 
+from core.rag.extractor.unstructured.my_chunking_strategy import ChunkProcessor
+
 logger = logging.getLogger(__name__)
 
 
 class UnstructuredWordExtractor(BaseExtractor):
     """Loader that uses unstructured to load word documents."""
 
-    def __init__(self, file_path: str, api_url: str, api_key: str = ""):
+    def __init__(self, file_path: str):
         """Initialize with file path."""
         self._file_path = file_path
-        self._api_url = api_url
-        self._api_key = api_key
 
     def extract(self) -> list[Document]:
         from unstructured.__version__ import __version__ as __unstructured_version__
@@ -38,20 +38,23 @@ class UnstructuredWordExtractor(BaseExtractor):
             )
 
         if is_doc:
-            from unstructured.partition.api import partition_via_api
+            from unstructured.partition.docx import partition_docx
 
-            elements = partition_via_api(filename=self._file_path, api_url=self._api_url, api_key=self._api_key)
+            elements = partition_docx(filename=self._file_path)
 
         else:
             from unstructured.partition.docx import partition_docx
 
             elements = partition_docx(filename=self._file_path)
 
-        from unstructured.chunking.title import chunk_by_title
+        # from unstructured.chunking.title import chunk_by_title
+        #
+        # chunks = chunk_by_title(elements, max_characters=2000, combine_text_under_n_chars=2000)
+        # documents = []
+        # for chunk in chunks:
+        #     text = chunk.text.strip()
+        #     documents.append(Document(page_content=text))
 
-        chunks = chunk_by_title(elements, max_characters=2000, combine_text_under_n_chars=2000)
-        documents = []
-        for chunk in chunks:
-            text = chunk.text.strip()
-            documents.append(Document(page_content=text))
-        return documents
+        chunk_processor = ChunkProcessor()
+
+        return chunk_processor.chunking(elements)

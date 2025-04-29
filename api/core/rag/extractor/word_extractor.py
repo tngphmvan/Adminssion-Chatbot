@@ -21,6 +21,7 @@ from extensions.ext_database import db
 from extensions.ext_storage import storage
 from models.enums import CreatedByRole
 from models.model import UploadFile
+from core.rag.extractor.unstructured.unstructured_doc_extractor import UnstructuredWordExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ class WordExtractor(BaseExtractor):
         self.file_path = file_path
         self.tenant_id = tenant_id
         self.user_id = user_id
+        self._extract = UnstructuredWordExtractor(file_path=file_path)
 
         if "~" in self.file_path:
             self.file_path = os.path.expanduser(self.file_path)
@@ -62,13 +64,7 @@ class WordExtractor(BaseExtractor):
 
     def extract(self) -> list[Document]:
         """Load given path as single page."""
-        content = self.parse_docx(self.file_path, "storage")
-        return [
-            Document(
-                page_content=content,
-                metadata={"source": self.file_path},
-            )
-        ]
+        return self._extract.extract()
 
     @staticmethod
     def _is_valid_url(url: str) -> bool:

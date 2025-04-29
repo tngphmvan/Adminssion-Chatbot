@@ -164,9 +164,9 @@ class LLMNode(BaseNode[LLMNodeData]):
             if self.node_data.memory:
                 query = self.node_data.memory.query_prompt_template
                 if not query and (
-                    query_variable := self.graph_runtime_state.variable_pool.get(
-                        (SYSTEM_VARIABLE_NODE_ID, SystemVariableKey.QUERY)
-                    )
+                        query_variable := self.graph_runtime_state.variable_pool.get(
+                            (SYSTEM_VARIABLE_NODE_ID, SystemVariableKey.QUERY)
+                        )
                 ):
                     query = query_variable.text
 
@@ -250,11 +250,11 @@ class LLMNode(BaseNode[LLMNodeData]):
             )
 
     def _invoke_llm(
-        self,
-        node_data_model: ModelConfig,
-        model_instance: ModelInstance,
-        prompt_messages: Sequence[PromptMessage],
-        stop: Optional[Sequence[str]] = None,
+            self,
+            node_data_model: ModelConfig,
+            model_instance: ModelInstance,
+            prompt_messages: Sequence[PromptMessage],
+            stop: Optional[Sequence[str]] = None,
     ) -> Generator[NodeEvent, None, None]:
         db.session.close()
 
@@ -308,7 +308,7 @@ class LLMNode(BaseNode[LLMNodeData]):
         yield ModelInvokeCompletedEvent(text=full_text, usage=usage, finish_reason=finish_reason)
 
     def _transform_chat_messages(
-        self, messages: Sequence[LLMNodeChatModelMessage] | LLMNodeCompletionModelPromptTemplate, /
+            self, messages: Sequence[LLMNodeChatModelMessage] | LLMNodeCompletionModelPromptTemplate, /
     ) -> Sequence[LLMNodeChatModelMessage] | LLMNodeCompletionModelPromptTemplate:
         if isinstance(messages, LLMNodeCompletionModelPromptTemplate):
             if messages.edition_type == "jinja2" and messages.jinja2_text:
@@ -447,11 +447,15 @@ class LLMNode(BaseNode[LLMNodeData]):
 
     def _convert_to_original_retriever_resource(self, context_dict: dict) -> Optional[dict]:
         if (
-            "metadata" in context_dict
-            and "_source" in context_dict["metadata"]
-            and context_dict["metadata"]["_source"] == "knowledge"
+                "metadata" in context_dict
+                and "_source" in context_dict["metadata"]
+                and context_dict["metadata"]["_source"] == "knowledge"
         ):
             metadata = context_dict.get("metadata", {})
+
+            document_id = metadata.get("document_id", "unknown")
+            content = context_dict.get("content", "")
+            formatted_content = f"Document ID: {document_id}\n----------------\n{content}"
 
             source = {
                 "position": metadata.get("position"),
@@ -467,7 +471,7 @@ class LLMNode(BaseNode[LLMNodeData]):
                 "word_count": metadata.get("segment_word_count"),
                 "segment_position": metadata.get("segment_position"),
                 "index_node_hash": metadata.get("segment_index_node_hash"),
-                "content": context_dict.get("content"),
+                "content": formatted_content,
                 "page": metadata.get("page"),
                 "doc_metadata": metadata.get("doc_metadata"),
             }
@@ -477,7 +481,7 @@ class LLMNode(BaseNode[LLMNodeData]):
         return None
 
     def _fetch_model_config(
-        self, node_data_model: ModelConfig
+            self, node_data_model: ModelConfig
     ) -> tuple[ModelInstance, ModelConfigWithCredentialsEntity]:
         model_name = node_data_model.name
         provider_name = node_data_model.provider
@@ -542,7 +546,7 @@ class LLMNode(BaseNode[LLMNodeData]):
         )
 
     def _fetch_memory(
-        self, node_data_memory: Optional[MemoryConfig], model_instance: ModelInstance
+            self, node_data_memory: Optional[MemoryConfig], model_instance: ModelInstance
     ) -> Optional[TokenBufferMemory]:
         if not node_data_memory:
             return None
@@ -570,19 +574,19 @@ class LLMNode(BaseNode[LLMNodeData]):
         return memory
 
     def _fetch_prompt_messages(
-        self,
-        *,
-        sys_query: str | None = None,
-        sys_files: Sequence["File"],
-        context: str | None = None,
-        memory: TokenBufferMemory | None = None,
-        model_config: ModelConfigWithCredentialsEntity,
-        prompt_template: Sequence[LLMNodeChatModelMessage] | LLMNodeCompletionModelPromptTemplate,
-        memory_config: MemoryConfig | None = None,
-        vision_enabled: bool = False,
-        vision_detail: ImagePromptMessageContent.DETAIL,
-        variable_pool: VariablePool,
-        jinja2_variables: Sequence[VariableSelector],
+            self,
+            *,
+            sys_query: str | None = None,
+            sys_files: Sequence["File"],
+            context: str | None = None,
+            memory: TokenBufferMemory | None = None,
+            model_config: ModelConfigWithCredentialsEntity,
+            prompt_template: Sequence[LLMNodeChatModelMessage] | LLMNodeCompletionModelPromptTemplate,
+            memory_config: MemoryConfig | None = None,
+            vision_enabled: bool = False,
+            vision_detail: ImagePromptMessageContent.DETAIL,
+            variable_pool: VariablePool,
+            jinja2_variables: Sequence[VariableSelector],
     ) -> tuple[Sequence[PromptMessage], Optional[Sequence[str]]]:
         prompt_messages: list[PromptMessage] = []
 
@@ -687,9 +691,9 @@ class LLMNode(BaseNode[LLMNodeData]):
             # If last prompt is a user prompt, add files into its contents,
             # otherwise append a new user prompt
             if (
-                len(prompt_messages) > 0
-                and isinstance(prompt_messages[-1], UserPromptMessage)
-                and isinstance(prompt_messages[-1].content, list)
+                    len(prompt_messages) > 0
+                    and isinstance(prompt_messages[-1], UserPromptMessage)
+                    and isinstance(prompt_messages[-1].content, list)
             ):
                 prompt_messages[-1] = UserPromptMessage(content=prompt_messages[-1].content + file_prompts)
             else:
@@ -710,22 +714,22 @@ class LLMNode(BaseNode[LLMNodeData]):
 
                     # Skip content if corresponding feature is not supported
                     if (
-                        (
-                            content_item.type == PromptMessageContentType.IMAGE
-                            and ModelFeature.VISION not in model_config.model_schema.features
-                        )
-                        or (
+                            (
+                                    content_item.type == PromptMessageContentType.IMAGE
+                                    and ModelFeature.VISION not in model_config.model_schema.features
+                            )
+                            or (
                             content_item.type == PromptMessageContentType.DOCUMENT
                             and ModelFeature.DOCUMENT not in model_config.model_schema.features
-                        )
-                        or (
+                    )
+                            or (
                             content_item.type == PromptMessageContentType.VIDEO
                             and ModelFeature.VIDEO not in model_config.model_schema.features
-                        )
-                        or (
+                    )
+                            or (
                             content_item.type == PromptMessageContentType.AUDIO
                             and ModelFeature.AUDIO not in model_config.model_schema.features
-                        )
+                    )
                     ):
                         continue
                     prompt_message_content.append(content_item)
@@ -812,17 +816,17 @@ class LLMNode(BaseNode[LLMNodeData]):
 
     @classmethod
     def _extract_variable_selector_to_variable_mapping(
-        cls,
-        *,
-        graph_config: Mapping[str, Any],
-        node_id: str,
-        node_data: LLMNodeData,
+            cls,
+            *,
+            graph_config: Mapping[str, Any],
+            node_id: str,
+            node_data: LLMNodeData,
     ) -> Mapping[str, Sequence[str]]:
         prompt_template = node_data.prompt_template
 
         variable_selectors = []
         if isinstance(prompt_template, list) and all(
-            isinstance(prompt, LLMNodeChatModelMessage) for prompt in prompt_template
+                isinstance(prompt, LLMNodeChatModelMessage) for prompt in prompt_template
         ):
             for prompt in prompt_template:
                 if prompt.edition_type != "jinja2":
@@ -891,8 +895,8 @@ class LLMNode(BaseNode[LLMNodeData]):
                         "conversation_histories_role": {"user_prefix": "Human", "assistant_prefix": "Assistant"},
                         "prompt": {
                             "text": "Here are the chat histories between human and assistant, inside "
-                            "<histories></histories> XML tags.\n\n<histories>\n{{"
-                            "#histories#}}\n</histories>\n\n\nHuman: {{#sys.query#}}\n\nAssistant:",
+                                    "<histories></histories> XML tags.\n\n<histories>\n{{"
+                                    "#histories#}}\n</histories>\n\n\nHuman: {{#sys.query#}}\n\nAssistant:",
                             "edition_type": "basic",
                         },
                         "stop": ["Human:"],
@@ -902,13 +906,13 @@ class LLMNode(BaseNode[LLMNodeData]):
         }
 
     def _handle_list_messages(
-        self,
-        *,
-        messages: Sequence[LLMNodeChatModelMessage],
-        context: Optional[str],
-        jinja2_variables: Sequence[VariableSelector],
-        variable_pool: VariablePool,
-        vision_detail_config: ImagePromptMessageContent.DETAIL,
+            self,
+            *,
+            messages: Sequence[LLMNodeChatModelMessage],
+            context: Optional[str],
+            jinja2_variables: Sequence[VariableSelector],
+            variable_pool: VariablePool,
+            vision_detail_config: ImagePromptMessageContent.DETAIL,
     ) -> Sequence[PromptMessage]:
         prompt_messages: list[PromptMessage] = []
         for message in messages:
@@ -1106,9 +1110,9 @@ class LLMNode(BaseNode[LLMNodeData]):
         """
         # Early return if structured output is disabled
         if (
-            not isinstance(self.node_data, LLMNodeData)
-            or not self.node_data.structured_output_enabled
-            or not self.node_data.structured_output
+                not isinstance(self.node_data, LLMNodeData)
+                or not self.node_data.structured_output_enabled
+                or not self.node_data.structured_output
         ):
             return SupportStructuredOutputStatus.DISABLED
         # Get model schema and check if it exists
@@ -1125,7 +1129,7 @@ class LLMNode(BaseNode[LLMNodeData]):
 
 
 def _combine_message_content_with_role(
-    *, contents: Optional[str | list[PromptMessageContentUnionTypes]] = None, role: PromptMessageRole
+        *, contents: Optional[str | list[PromptMessageContentUnionTypes]] = None, role: PromptMessageRole
 ):
     match role:
         case PromptMessageRole.USER:
@@ -1138,10 +1142,10 @@ def _combine_message_content_with_role(
 
 
 def _render_jinja2_message(
-    *,
-    template: str,
-    jinjia2_variables: Sequence[VariableSelector],
-    variable_pool: VariablePool,
+        *,
+        template: str,
+        jinjia2_variables: Sequence[VariableSelector],
+        variable_pool: VariablePool,
 ):
     if not template:
         return ""
@@ -1160,7 +1164,7 @@ def _render_jinja2_message(
 
 
 def _calculate_rest_token(
-    *, prompt_messages: list[PromptMessage], model_config: ModelConfigWithCredentialsEntity
+        *, prompt_messages: list[PromptMessage], model_config: ModelConfigWithCredentialsEntity
 ) -> int:
     rest_tokens = 2000
 
@@ -1175,12 +1179,12 @@ def _calculate_rest_token(
         max_tokens = 0
         for parameter_rule in model_config.model_schema.parameter_rules:
             if parameter_rule.name == "max_tokens" or (
-                parameter_rule.use_template and parameter_rule.use_template == "max_tokens"
+                    parameter_rule.use_template and parameter_rule.use_template == "max_tokens"
             ):
                 max_tokens = (
-                    model_config.parameters.get(parameter_rule.name)
-                    or model_config.parameters.get(str(parameter_rule.use_template))
-                    or 0
+                        model_config.parameters.get(parameter_rule.name)
+                        or model_config.parameters.get(str(parameter_rule.use_template))
+                        or 0
                 )
 
         rest_tokens = model_context_tokens - max_tokens - curr_message_tokens
@@ -1190,10 +1194,10 @@ def _calculate_rest_token(
 
 
 def _handle_memory_chat_mode(
-    *,
-    memory: TokenBufferMemory | None,
-    memory_config: MemoryConfig | None,
-    model_config: ModelConfigWithCredentialsEntity,
+        *,
+        memory: TokenBufferMemory | None,
+        memory_config: MemoryConfig | None,
+        model_config: ModelConfigWithCredentialsEntity,
 ) -> Sequence[PromptMessage]:
     memory_messages: Sequence[PromptMessage] = []
     # Get messages from memory for chat model
@@ -1207,10 +1211,10 @@ def _handle_memory_chat_mode(
 
 
 def _handle_memory_completion_mode(
-    *,
-    memory: TokenBufferMemory | None,
-    memory_config: MemoryConfig | None,
-    model_config: ModelConfigWithCredentialsEntity,
+        *,
+        memory: TokenBufferMemory | None,
+        memory_config: MemoryConfig | None,
+        model_config: ModelConfigWithCredentialsEntity,
 ) -> str:
     memory_text = ""
     # Get history text from memory for completion model
@@ -1228,11 +1232,11 @@ def _handle_memory_completion_mode(
 
 
 def _handle_completion_template(
-    *,
-    template: LLMNodeCompletionModelPromptTemplate,
-    context: Optional[str],
-    jinja2_variables: Sequence[VariableSelector],
-    variable_pool: VariablePool,
+        *,
+        template: LLMNodeCompletionModelPromptTemplate,
+        context: Optional[str],
+        jinja2_variables: Sequence[VariableSelector],
+        variable_pool: VariablePool,
 ) -> Sequence[PromptMessage]:
     """Handle completion template processing outside of LLMNode class.
 

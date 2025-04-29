@@ -7,41 +7,22 @@ from core.rag.extractor.blob.blob import Blob
 from core.rag.extractor.extractor_base import BaseExtractor
 from core.rag.models.document import Document
 from extensions.ext_storage import storage
+from core.rag.extractor.unstructured.unstructured_pdf_extractor import UnstructuredPDFExtractor
 
 
 class PdfExtractor(BaseExtractor):
     """Load pdf files.
-
-
     Args:
         file_path: Path to the file to load.
     """
 
     def __init__(self, file_path: str, file_cache_key: Optional[str] = None):
         """Initialize with file path."""
-        self._file_path = file_path
         self._file_cache_key = file_cache_key
+        self._extractor = UnstructuredPDFExtractor(file_path=file_path)
 
     def extract(self) -> list[Document]:
-        plaintext_file_exists = False
-        if self._file_cache_key:
-            try:
-                text = cast(bytes, storage.load(self._file_cache_key)).decode("utf-8")
-                plaintext_file_exists = True
-                return [Document(page_content=text)]
-            except FileNotFoundError:
-                pass
-        documents = list(self.load())
-        text_list = []
-        for document in documents:
-            text_list.append(document.page_content)
-        text = "\n\n".join(text_list)
-
-        # save plaintext file for caching
-        if not plaintext_file_exists and self._file_cache_key:
-            storage.save(self._file_cache_key, text.encode("utf-8"))
-
-        return documents
+        return self._extractor.extract()
 
     def load(
         self,

@@ -3,6 +3,8 @@ import logging
 from core.rag.extractor.extractor_base import BaseExtractor
 from core.rag.models.document import Document
 
+from core.rag.extractor.unstructured.my_chunking_strategy import ChunkProcessor
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,30 +20,23 @@ class UnstructuredPDFExtractor(BaseExtractor):
         api_key: Unstructured API Key
     """
 
-    def __init__(self, file_path: str, api_url: str, api_key: str):
+    def __init__(self, file_path: str):
         """Initialize with file path."""
         self._file_path = file_path
-        self._api_url = api_url
-        self._api_key = api_key
 
     def extract(self) -> list[Document]:
-        if self._api_url:
-            from unstructured.partition.api import partition_via_api
+        from unstructured.partition.pdf import partition_pdf
 
-            elements = partition_via_api(
-                filename=self._file_path, api_url=self._api_url, api_key=self._api_key, strategy="auto"
-            )
-        else:
-            from unstructured.partition.pdf import partition_pdf
+        elements = partition_pdf(filename=self._file_path, strategy="auto")
 
-            elements = partition_pdf(filename=self._file_path, strategy="auto")
+        # from unstructured.chunking.title import chunk_by_title
+        #
+        # chunks = chunk_by_title(elements, max_characters=2000, combine_text_under_n_chars=2000)
+        # documents = []
+        # for chunk in chunks:
+        #     text = chunk.text.strip()
+        #     documents.append(Document(page_content=text))
 
-        from unstructured.chunking.title import chunk_by_title
+        chunk_processor = ChunkProcessor()
 
-        chunks = chunk_by_title(elements, max_characters=2000, combine_text_under_n_chars=2000)
-        documents = []
-        for chunk in chunks:
-            text = chunk.text.strip()
-            documents.append(Document(page_content=text))
-
-        return documents
+        return chunk_processor.chunking(elements)
